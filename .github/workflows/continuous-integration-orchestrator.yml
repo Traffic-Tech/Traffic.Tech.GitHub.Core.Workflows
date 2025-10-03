@@ -21,8 +21,30 @@ jobs:
         echo "language=$LANG" >> $GITHUB_OUTPUT
         echo "🔍 Detected language: $LANG"
 
-  call-ci:
+  python-ci:
     needs: detect-language
-    uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-${{ needs.detect-language.outputs.language }}.yml@master
+    if: needs.detect-language.outputs.language == 'python'
+    uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-python.yml@master
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  # TODO: Crear los siguientes CIs cuando se necesiten
+  # nodejs-ci:
+  #   needs: detect-language
+  #   if: needs.detect-language.outputs.language == 'nodejs'
+  #   uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-nodejs.yml@master
+  #   secrets:
+  #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # terraform-ci:
+  #   needs: detect-language
+  #   if: needs.detect-language.outputs.language == 'terraform'
+  #   uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-terraform.yml@master
+  #   secrets:
+  #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # kubernetes-ci:
+  #   needs: detect-language
+  #   if: needs.detect-language.outputs.language == 'kubernetes'
+  #   uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-kubernetes.yml@master
+  #   secrets:
+  #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
