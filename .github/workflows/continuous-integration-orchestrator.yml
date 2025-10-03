@@ -29,7 +29,6 @@ jobs:
       id: detect
       working-directory: ${{ inputs.project-path }}
       run: |
-        ls -la
         LANG=$(grep "^sonar.language=" sonar-project.properties | cut -d'=' -f2)
         echo "language=$LANG" >> $GITHUB_OUTPUT
         echo "🔍 Detected language: $LANG"

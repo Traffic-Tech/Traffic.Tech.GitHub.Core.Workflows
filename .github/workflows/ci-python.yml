@@ -45,11 +45,11 @@ jobs:
       working-directory: ${{ inputs.project-path }}
       run: |
         export PYTHONPATH="src"
-        pylint src/ --fail-under=9.5
+        uv run pylint src/ --fail-under=9.5
 
     - name: Run tests with coverage
       working-directory: ${{ inputs.project-path }}
-      run: pytest tests/ --cov=src --cov-config=.coveragerc --cov-report=term-missing --cov-report=xml -v
+      run: uv run pytest tests/ --cov=src --cov-config=.coveragerc --cov-report=term-missing --cov-report=xml -v
 
     - name: SonarCloud Scan
       uses: SonarSource/sonarqube-scan-action@v6
