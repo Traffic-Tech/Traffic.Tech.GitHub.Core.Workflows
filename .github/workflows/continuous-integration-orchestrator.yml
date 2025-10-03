@@ -1,0 +1,24 @@
+name: CI Orchestrator
+
+on:
+  workflow_call:
+
+
+jobs:
+  detect-language:
+    runs-on: ubuntu-latest
+    outputs:
+      language: ${{ steps.detect.outputs.language }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Detect language
+      id: detect
+      run: |
+        LANG=$(grep "^sonar.language=" sonar.properties | cut -d'=' -f2)
+        echo "language=$LANG" >> $GITHUB_OUTPUT
+        echo "🔍 Detected language: $LANG"
+
+  call-ci:
+    needs: detect-language
+    uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-${{ needs.detect-language.outputs.language }}.yml@main
