@@ -2,7 +2,9 @@ name: Python CI
 
 on:
   workflow_call:
-
+    secrets:
+      SONAR_TOKEN:
+        required: true
 
 jobs:
   python-ci:
@@ -15,75 +17,27 @@ jobs:
       with:
         python-version: '3.13'
 
-    - name: Read SonarQube configuration
-      id: sonar-config
-      run: |
-        echo "📋 Reading SonarQube configuration..."
-        PROJECT_KEY=$(grep "^sonar.projectKey=" sonar.properties | cut -d'=' -f2)
-        PROJECT_NAME=$(grep "^sonar.projectName=" sonar.properties | cut -d'=' -f2)
-        ORGANIZATION=$(grep "^sonar.organization=" sonar.properties | cut -d'=' -f2)
-
-        echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
-        echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
-        echo "ORGANIZATION=$ORGANIZATION" >> $GITHUB_ENV
-
-        echo "✅ SonarQube config - Key: $PROJECT_KEY, Name: $PROJECT_NAME, Org: $ORGANIZATION"
-
     - name: Create configuration files
       run: |
-        echo "📋 Creating configuration files..."
-        echo "${{ vars.PYLINT_TEMPLATE }}" > .pylintrc && echo "✅ .pylintrc created successfully" || echo "❌ Failed to create .pylintrc"
-        echo "${{ vars.COVERAGE_TEMPLATE_PYTHON }}" > .coveragerc && echo "✅ .coveragerc created successfully" || echo "❌ Failed to create .coveragerc"
+        echo "${{ vars.PYLINT_TEMPLATE }}" > .pylintrc
+        echo "${{ vars.COVERAGE_TEMPLATE_PYTHON }}" > .coveragerc
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
 
     - name: Install dependencies
-      run: |
-        echo "📦 Installing dependencies with uv..."
-        uv sync && echo "✅ Dependencies installed successfully" || echo "❌ Failed to install dependencies"
+      run: uv sync
 
     - name: Run Pylint
       run: |
-        echo "🔍 Running Pylint analysis (minimum score: 9.5)..."
         export PYTHONPATH="src"
-        pylint src/ --fail-under=9.5 && echo "✅ Pylint passed with score ≥ 9.5" || echo "❌ Pylint failed - score < 9.5"
+        pylint src/ --fail-under=9.5
 
     - name: Run tests with coverage
-      run: |
-        echo "🧪 Running tests with coverage analysis..."
-        pytest tests/ --cov=src --cov-config=.coveragerc --cov-report=term-missing -v && echo "✅ All tests passed with coverage" || echo "❌ Tests failed or coverage too low"
+      run: pytest tests/ --cov=src --cov-config=.coveragerc --cov-report=term-missing --cov-report=xml -v
 
-    - name: Setup Java for SonarQube
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-
-    - name: SonarQube Scan
-      run: |
-        echo "🔍 Running SonarQube analysis..."
-        echo "📊 Project: ${{ env.PROJECT_NAME }}"
-        echo "🔑 Key: ${{ env.PROJECT_KEY }}"
-        echo "🏢 Organization: ${{ env.ORGANIZATION }}"
-
-        # Install SonarQube Scanner
-        curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-        unzip -q sonar-scanner.zip
-        export PATH=$PWD/sonar-scanner-4.8.0.2856-linux/bin:$PATH
-
-        # Run SonarQube analysis
-        sonar-scanner \
-          -Dsonar.projectKey="${{ env.PROJECT_KEY }}" \
-          -Dsonar.projectName="${{ env.PROJECT_NAME }}" \
-          -Dsonar.organization="${{ env.ORGANIZATION }}" \
-          -Dsonar.sources=src \
-          -Dsonar.tests=tests \
-          -Dsonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
-          -Dsonar.login="${{ secrets.SONAR_TOKEN }}" \
-          -Dsonar.qualitygate.wait=true \
-          -Dsonar.python.coverage.reportPaths=coverage.xml \
-          -Dsonar.sourceEncoding=UTF-8 && echo "✅ SonarQube analysis completed successfully" || echo "❌ SonarQube analysis failed"
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

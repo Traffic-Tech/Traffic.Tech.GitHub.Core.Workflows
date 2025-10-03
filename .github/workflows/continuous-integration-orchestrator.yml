@@ -2,7 +2,9 @@ name: CI Orchestrator
 
 on:
   workflow_call:
-
+    secrets:
+      SONAR_TOKEN:
+        required: true
 
 jobs:
   detect-language:
@@ -15,10 +17,12 @@ jobs:
     - name: Detect language
       id: detect
       run: |
-        LANG=$(grep "^sonar.language=" sonar.properties | cut -d'=' -f2)
+        LANG=$(grep "^sonar.language=" sonar-project.properties | cut -d'=' -f2)
         echo "language=$LANG" >> $GITHUB_OUTPUT
         echo "🔍 Detected language: $LANG"
 
   call-ci:
     needs: detect-language
     uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-${{ needs.detect-language.outputs.language }}.yml@main
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
