@@ -23,6 +23,6 @@ jobs:
 
   call-ci:
     needs: detect-language
-    uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-${{ needs.detect-language.outputs.language }}.yml@main
+    uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-${{ needs.detect-language.outputs.language }}.yml@master
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
