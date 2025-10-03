@@ -2,6 +2,17 @@ name: CI Orchestrator
 
 on:
   workflow_call:
+    inputs:
+      project-path:
+        description: 'Path to the project directory'
+        required: false
+        type: string
+        default: '.'
+      python-version:
+        description: 'Python version to use'
+        required: false
+        type: string
+        default: '3.13'
     secrets:
       SONAR_TOKEN:
         required: true
@@ -16,6 +27,7 @@ jobs:
 
     - name: Detect language
       id: detect
+      working-directory: ${{ inputs.project-path }}
       run: |
         LANG=$(grep "^sonar.language=" sonar-project.properties | cut -d'=' -f2)
         echo "language=$LANG" >> $GITHUB_OUTPUT
@@ -25,6 +37,9 @@ jobs:
     needs: detect-language
     if: needs.detect-language.outputs.language == 'python'
     uses: Traffic-Tech/Traffic.Tech.GitHub.Core.Workflows/.github/workflows/ci-python.yml@master
+    with:
+      project-path: ${{ inputs.project-path }}
+      python-version: ${{ inputs.python-version }}
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   # TODO: Crear los siguientes CIs cuando se necesiten

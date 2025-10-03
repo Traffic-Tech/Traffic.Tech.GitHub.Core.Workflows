@@ -2,6 +2,17 @@ name: Python CI
 
 on:
   workflow_call:
+    inputs:
+      project-path:
+        description: 'Path to the project directory'
+        required: false
+        type: string
+        default: '.'
+      python-version:
+        description: 'Python version to use'
+        required: false
+        type: string
+        default: '3.13'
     secrets:
       SONAR_TOKEN:
         required: true
@@ -15,9 +26,10 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.13'
+        python-version: ${{ inputs.python-version }}
 
     - name: Create configuration files
+      working-directory: ${{ inputs.project-path }}
       run: |
         echo "${{ vars.PYLINT_TEMPLATE }}" > .pylintrc
         echo "${{ vars.COVERAGE_TEMPLATE_PYTHON }}" > .coveragerc
@@ -26,14 +38,17 @@ jobs:
       uses: astral-sh/setup-uv@v3
 
     - name: Install dependencies
+      working-directory: ${{ inputs.project-path }}
       run: uv sync
 
     - name: Run Pylint
+      working-directory: ${{ inputs.project-path }}
       run: |
         export PYTHONPATH="src"
         pylint src/ --fail-under=9.5
 
     - name: Run tests with coverage
+      working-directory: ${{ inputs.project-path }}
       run: pytest tests/ --cov=src --cov-config=.coveragerc --cov-report=term-missing --cov-report=xml -v
 
     - name: SonarCloud Scan
